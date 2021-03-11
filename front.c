@@ -7,6 +7,8 @@ void print_menu(char ** menu, int menuSize, WINDOW * win, int startY){
     for(i=0; i<menuSize; i++, startY++){
         mvwaddstr(win, startY, 1, menu[i]);
     }
+
+    wrefresh(win);
 }
 
 int get_choice(char ** menu, int menuSize, int mouseX, int mouseY, int startY){
