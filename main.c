@@ -2,6 +2,7 @@
 #include <string.h>
 #include <locale.h>
 #include "front.h"
+#include "back.h"
 
 //tentar passar isso para a biblioteca
 char * main_menu[SIZE_MAIN_MENU] = {
@@ -53,7 +54,8 @@ start_menu:
 verify_mouse_main_entry:
         switch(main_entry){
             case '1':
-                //opção 1
+                add_livro(menu);
+                goto start_menu;
                 break;
             case '2':
                 wclear(menu);
