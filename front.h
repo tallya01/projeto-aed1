@@ -3,6 +3,11 @@
 
 #include <ncurses.h>
 
+#define SIZE_MAIN_MENU 6
+#define SIZE_SEARCH_MENU 4
+#define MAIN_MENU_STARTY 4
+#define SEARCH_MENU_STARTY 3
+
 /**
  * @brief função para imprimir um menu na tela
  * 
