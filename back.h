@@ -4,11 +4,14 @@
 
 #define T 31
 
+int choice;
+MEVENT mouse;
+
 //estrutura correspondente aos dados do livro
 typedef struct{
     char nome_livro[T];
     char nome_autor[T];
-    char genero[T];
+    int genre;
     int ano_publicacao;
     int quantidade_exemplares;
 } Livro;
@@ -38,5 +41,7 @@ Hora hora;
  * na qual serão impressas as mensagens necessárias
  */
 void add_livro(WINDOW * menu);
+
+void print_books(WINDOW * menu, int choice);
 
 #endif

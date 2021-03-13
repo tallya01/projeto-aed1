@@ -23,9 +23,8 @@ char * search_menu[SIZE_SEARCH_MENU] = {
 
 int main(){
     int main_entry, search_entry;
-    int exit_flag = 0, choice;
+    int exit_flag = 0;
     WINDOW * menu;
-    MEVENT mouse;
 
     setlocale(LC_ALL, "Portuguese");
     initscr();
@@ -43,11 +42,13 @@ int main(){
 
 start_menu:
     box(menu, 0, 0);
+    curs_set(0);
     mvwaddstr(menu, 1, (COLS-26)/2, "Gerenciador de Biblioteca");
     mvwaddstr(menu, 2, 1, "Clique na opção desejada ou digite o número correspondente:");
     print_menu(main_menu, SIZE_MAIN_MENU, menu, MAIN_MENU_STARTY);
     wrefresh(menu);
 
+    //menu principal
     while(exit_flag==0){
         main_entry = getch();
 
@@ -68,10 +69,12 @@ verify_mouse_main_entry:
                     search_entry = getch();
 
 verify_mouse_search_entry:
+                    //menu de busca
                     switch(search_entry){
                         case '1':
-                            //função de busca
-                            break;
+                            print_books(menu, 1);
+                            wclear(menu);
+                            goto start_menu;
                         case '2':
                             //função de busca
                             break;
