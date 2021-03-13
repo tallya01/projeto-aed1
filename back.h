@@ -2,7 +2,7 @@
 #define __BACK_H__
 #include <ncurses.h>
 
-#define T 31
+#define T 100
 
 int choice;
 MEVENT mouse;

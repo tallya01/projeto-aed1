@@ -76,11 +76,13 @@ verify_mouse_search_entry:
                             wclear(menu);
                             goto start_menu;
                         case '2':
-                            //função de busca
-                            break;
+                            print_books(menu, 2);
+                            wclear(menu);
+                            goto start_menu;
                         case '3':
-                            //função de busca
-                            break;
+                            print_books(menu, 3);
+                            wclear(menu);
+                            goto start_menu;
                         case '4':
                             wclear(menu);
                             goto start_menu;
