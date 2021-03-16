@@ -39,6 +39,7 @@ int main(){
     wclear(stdscr);
     refresh();
     menu = newwin(LINES, COLS, 0, 0);
+    keypad(menu, TRUE);
 
 start_menu:
     box(menu, 0, 0);
@@ -55,7 +56,7 @@ start_menu:
 verify_mouse_main_entry:
         switch(main_entry){
             case '1':
-                add_livro(menu);
+                add_book(menu);
                 goto start_menu;
                 break;
             case '2':
@@ -72,15 +73,15 @@ verify_mouse_search_entry:
                     //menu de busca
                     switch(search_entry){
                         case '1':
-                            print_books(menu, 1);
+                            search_and_print_books(menu, 1);
                             wclear(menu);
                             goto start_menu;
                         case '2':
-                            print_books(menu, 2);
+                            search_and_print_books(menu, 2);
                             wclear(menu);
                             goto start_menu;
                         case '3':
-                            print_books(menu, 3);
+                            search_and_print_books(menu, 3);
                             wclear(menu);
                             goto start_menu;
                         case '4':
@@ -100,8 +101,9 @@ verify_mouse_search_entry:
                     }
                 }
             case '3':
-                //opção 3
-                break;
+                see_lent_books(menu);
+                wclear(menu);
+                goto start_menu;
             case '4':
                 //opção 4
                 break;
