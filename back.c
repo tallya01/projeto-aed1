@@ -13,7 +13,7 @@ char * genre_menu[SIZE_GENRE_MENU] = {
     "5. Computação"
 };
 
-void add_livro(WINDOW * menu){
+void add_book(WINDOW * menu){
     wclear(menu);
     box(menu,0,0);
     wrefresh(menu);
@@ -60,6 +60,7 @@ verify_mouse_genre_entry:
     mvwscanw(menu, 7+SIZE_GENRE_MENU,1, "%d", &livro.ano_publicacao);
     mvwaddstr(menu, 8+SIZE_GENRE_MENU,1, "Digite a quantidade de exemplares: ");
     mvwscanw(menu, 9+SIZE_GENRE_MENU,1, "%d", &livro.quantidade_exemplares);
+    livro.exemplares_disponiveis = livro.quantidade_exemplares;
 
     p = fopen("books.dat", "ab+");
     if(fwrite(&livro, sizeof(livro), 1, p)){
@@ -92,19 +93,19 @@ char *get_genre(int genre){
     }
 }
 
-void print_books(WINDOW * menu, int choice){
+void search_and_print_books(WINDOW * menu, int choice){
 
     wclear(menu);
     box(menu, 0,0);
     Livro *book = (Livro*) malloc(sizeof(Livro)), *n_genre_book;
     FILE *file = fopen("books.dat", "rb");
-    int achou = 0, k = 1, i, n_genre=0, *genre_select;
+    int achou = 0, k = 1, i, n_genre=0, *genre_select, action = 0;
     char sub_string[101];
 
     if(file == NULL){
         mvwprintw(menu, 1,1, "Erro ao abrir o arquivo, digite qualquer tecla para retornar ao menu");
-        getch();
         wrefresh(menu);
+        getch();
         return;
     }
 
@@ -124,6 +125,7 @@ void print_books(WINDOW * menu, int choice){
                     book[k-1].genre = livro.genre;
                     book[k-1].ano_publicacao = livro.ano_publicacao;
                     book[k-1].quantidade_exemplares = livro.quantidade_exemplares;
+                    book[k-1].exemplares_disponiveis = livro.exemplares_disponiveis;
 
                     k++;
                     n_genre_book = (Livro*) realloc(book, sizeof(Livro)*k);
@@ -142,19 +144,44 @@ void print_books(WINDOW * menu, int choice){
                 return;
             }
 
-            for(i=0; i<k-1; i++){
-                mvwprintw(menu, 3+(4*i),1, "Livro: %s", book[i].nome_livro);
-                mvwprintw(menu, 4+(4*i),1, "Autor: %s", book[i].nome_autor);
-                mvwprintw(menu, 5+(4*i),1, "Gênero: %s", get_genre(book[i].genre));
-                mvwprintw(menu, 6+(4*i),1, "Ano de publicação: %d, Quant. exemplares: %d", book[i].ano_publicacao, book[i].quantidade_exemplares);
+            i=0;
+            while(1){
+                wclear(menu);
+                box(menu,0,0);
+                curs_set(0);
+                mvwprintw(menu,1,1, "Exibindo resultado %d de %d:", i+1, k-1);
+                mvwprintw(menu, 3,1, "Livro: %s", book[i].nome_livro);
+                mvwprintw(menu, 4,1, "Autor: %s", book[i].nome_autor);
+                mvwprintw(menu, 5,1, "Gênero: %s", get_genre(book[i].genre));
+                mvwprintw(menu, 6,1, "Ano de publicação: %d", book[i].ano_publicacao);
+                mvwprintw(menu, 7,1, "Total de exemplares: %d (%d disponíveis)", book[i].quantidade_exemplares, book[i].exemplares_disponiveis);
+                mvwaddstr(menu, 9,1, "Setas esquerda e direita para navegar pelos resultados");
+                mvwaddstr(menu, 10,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
+                wrefresh(menu);
+                action = getch();
+                switch(action){
+                    case KEY_LEFT:
+                        if(i==0) break;
+                        else{
+                            i--;
+                            break;
+                        }
+                    case KEY_RIGHT:
+                        if(i==k-2) break;
+                        else{
+                            i++;
+                            break;
+                        }
+                    case KEY_F(1):
+                        lend_book(&book[i], menu);
+                        return;
+                    case KEY_F(2):
+                        fclose(file);
+                        free(book);
+                        return;
+                }
             }
-
-            fclose(file);
-            free(book);
-            mvwprintw(menu, (4*i)+3,1, "pressione qualquer tecla para continuar");
-            wrefresh(menu);
-            getch();
-            return;
+            
         case 2:
             curs_set(1);
             echo();
@@ -178,7 +205,7 @@ void print_books(WINDOW * menu, int choice){
             }
 
             if(achou == 0){
-                mvwprintw(menu, 3,1, "Não possuímos livros com esse nome meu caro/a");
+                mvwprintw(menu, 3,1, "Não possuímos livros com esse autor meu caro/a");
                 fclose(file);
                 free(book);
                 mvwprintw(menu, 4,1, "pressione qualquer tecla para voltar");
@@ -187,30 +214,52 @@ void print_books(WINDOW * menu, int choice){
                 return;
             }
 
-            for(i=0; i<k-1; i++){
-                mvwprintw(menu, 3+(4*i), 1, "Nome do Livro: %s", book[i].nome_livro);
-                mvwprintw(menu, 4+(4*i), 1, "Nome do Autor: %s", book[i].nome_autor);
-                mvwprintw(menu, 5+(4*i), 1, "Gênero: %s", get_genre(book[i].genre));
-                mvwprintw(menu, 6+(4*i), 1, "Ano de publicação: %d, exemplares: %d", book[i].ano_publicacao, book[i].quantidade_exemplares);
+            i=0;
+            while(1){
+                wclear(menu);
+                box(menu,0,0);
+                curs_set(0);
+                mvwprintw(menu,1,1, "Exibindo resultado %d de %d:", i+1, k-1);
+                mvwprintw(menu, 3,1, "Livro: %s", book[i].nome_livro);
+                mvwprintw(menu, 4,1, "Autor: %s", book[i].nome_autor);
+                mvwprintw(menu, 5,1, "Gênero: %s", get_genre(book[i].genre));
+                mvwprintw(menu, 6,1, "Ano de publicação: %d", book[i].ano_publicacao);
+                mvwprintw(menu, 7,1, "Total de exemplares: %d (%d disponíveis)", book[i].quantidade_exemplares, book[i].exemplares_disponiveis);
+                mvwaddstr(menu, 9,1, "Setas esquerda e direita para navegar pelos resultados");
+                mvwaddstr(menu, 10,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
+                wrefresh(menu);
+                action = getch();
+                switch(action){
+                    case KEY_LEFT:
+                        if(i==0) break;
+                        else{
+                            i--;
+                            break;
+                        }
+                    case KEY_RIGHT:
+                        if(i==k-2) break;
+                        else{
+                            i++;
+                            break;
+                        }
+                    case KEY_F(1):
+                        lend_book(&book[i], menu);
+                        return;
+                    case KEY_F(2):
+                        fclose(file);
+                        free(book);
+                        return;
+                }
             }
-
-            fclose(file);
-            free(book);
-            mvwprintw(menu, (4*i)+3,1, "pressione qualquer tecla para continuar");
-            wrefresh(menu);
-            getch();
-            return;
         
-        case 3:;
-            curs_set(1);
-            echo();
+        case 3:
             mvwprintw(menu, 1,1, "Selecione o código do gênero que deseja buscar:");
             print_menu(genre_menu, SIZE_GENRE_MENU, menu, GENRE_MENU_STARTY-4);
             curs_set(0);
             wrefresh(menu);
             genre_select = calloc(1, sizeof(int));
             *genre_select = getch();
-        verify_mouse_genre_entry:
+verify_mouse_genre_entry:
             switch(*genre_select){
                 case '1': n_genre = 1;
                     break;
@@ -251,7 +300,7 @@ void print_books(WINDOW * menu, int choice){
             }
 
             if(achou == 0){
-                mvwprintw(menu, 3+SIZE_GENRE_MENU,1, "Não possuímos livros com esse nome meu caro/a");
+                mvwprintw(menu, 3+SIZE_GENRE_MENU,1, "Não possuímos livros com esse gênero meu caro/a");
                 fclose(file);
                 free(book);
                 free(genre_select);
@@ -261,19 +310,175 @@ void print_books(WINDOW * menu, int choice){
                 return;
             }
 
-            for(i=0; i<k-1; i++){
-                mvwprintw(menu, 2+(4*i)+SIZE_GENRE_MENU, 1, "Nome do Livro: %s", book[i].nome_livro);
-                mvwprintw(menu, 3+(4*i)+SIZE_GENRE_MENU, 1, "Nome do Autor: %s", book[i].nome_autor);
-                mvwprintw(menu, 4+(4*i)+SIZE_GENRE_MENU, 1, "Gênero: %s", get_genre(book[i].genre));
-                mvwprintw(menu, 5+(4*i)+SIZE_GENRE_MENU, 1, "Ano de publicação: %d, exemplares: %d", book[i].ano_publicacao, book[i].quantidade_exemplares);
+            i=0;
+            while(1){
+                wclear(menu);
+                box(menu,0,0);
+                curs_set(0);
+                mvwprintw(menu,1,1, "Exibindo resultado %d de %d:", i+1, k-1);
+                mvwprintw(menu, 3,1, "Livro: %s", book[i].nome_livro);
+                mvwprintw(menu, 4,1, "Autor: %s", book[i].nome_autor);
+                mvwprintw(menu, 5,1, "Gênero: %s", get_genre(book[i].genre));
+                mvwprintw(menu, 6,1, "Ano de publicação: %d", book[i].ano_publicacao);
+                mvwprintw(menu, 7,1, "Total de exemplares: %d (%d disponíveis)", book[i].quantidade_exemplares, book[i].exemplares_disponiveis);
+                mvwaddstr(menu, 9,1, "Setas esquerda e direita para navegar pelos resultados");
+                mvwaddstr(menu, 10,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
+                wrefresh(menu);
+                action = getch();
+                switch(action){
+                    case KEY_LEFT:
+                        if(i==0) break;
+                        else{
+                            i--;
+                            break;
+                        }
+                    case KEY_RIGHT:
+                        if(i==k-2) break;
+                        else{
+                            i++;
+                            break;
+                        }
+                    case KEY_F(1):
+                        lend_book(&book[i], menu);
+                        return;
+                    case KEY_F(2):
+                        fclose(file);
+                        free(book);
+                        free(genre_select);
+                        return;
+                }
             }
+    }
+}
 
-            fclose(file);
-            free(book);
-            free(genre_select);
-            mvwprintw(menu, (4*i)+2+SIZE_GENRE_MENU,1, "pressione qualquer tecla para continuar");
-            wrefresh(menu);
-            getch();
-            return;
+/* falta atualizar no "books.dat" a quantidade de exemplares
+disponíveis depois de emprestar um livro */
+void lend_book(Livro * book, WINDOW * win){
+    Emprestimo lending;
+    FILE * arq = fopen("lent.dat", "ab+");
+    time_t rawtime;
+    struct tm * date;
+    time(&rawtime);
+    date = localtime(&rawtime);
+    int i;
+
+    wclear(win);
+    box(win,0,0);
+
+    strcpy(lending.nome_livro, book->nome_livro);
+    
+    mvwaddstr(win, 1,1, "Digite o nome da pessoa que está retirando o livro:");
+    curs_set(1);
+    echo();
+    wrefresh(win);
+    mvwscanw(win, 2,1, "%[^\n]", &lending.nome_pessoa);
+    curs_set(0);
+    noecho();
+    lending.data_retirada.dd = date->tm_mday;
+    lending.data_retirada.mm = date->tm_mon+1;
+    lending.data_retirada.yy = date->tm_year+1900;
+    lending.hora_retirada.hh = date->tm_hour;
+    lending.hora_retirada.mm = date->tm_min;
+    return_book_date(&lending);
+
+    if(fwrite(&lending, sizeof(Emprestimo), 1, arq)){
+        mvwprintw(win, 4,1, "Empréstimo registrado com sucesso, data de devolução %d/%d/%d", lending.data_devolucao.dd, lending.data_devolucao.mm, lending.data_devolucao.yy);
+        wrefresh(win);
+        fclose(arq);
+        getch();
+    }
+    else{
+        mvwaddstr(win, 4,1, "Empréstimo mal sucedido, tente novamente");
+        wrefresh(win);
+        fclose(arq);
+        getch();
+    }
+
+}
+
+void see_lent_books(WINDOW * win){
+    FILE * arq = fopen("lent.dat", "rb");
+    int i = 1;
+
+    wclear(win);
+    box(win,0,0);
+
+    while(fread(&emprestimo, sizeof(Emprestimo), 1, arq)==1){
+        mvwprintw(win, i,1, "Nome do livro: %s", emprestimo.nome_livro);
+        mvwprintw(win, i+1,1, "Nome do retirante: %s", emprestimo.nome_pessoa);
+        mvwprintw(win, i+2,1, "Data e hora de retirada: %d/%d/%d %d:%d", emprestimo.data_retirada.dd, emprestimo.data_retirada.mm, emprestimo.data_retirada.yy, emprestimo.hora_retirada.hh, emprestimo.hora_retirada.mm);
+        mvwprintw(win, i+3,1, "Data de devolução: %d/%d/%d", emprestimo.data_devolucao.dd, emprestimo.data_devolucao.mm, emprestimo.data_devolucao.yy);
+        i += 5;
+        wrefresh(win);
+    }
+
+    mvwaddstr(win, i,1, "Pressione qualquer tecla para voltar");
+    wrefresh(win);
+    getch();
+    fclose(arq);
+}
+
+int compare_date(int dd, int mm, int yy){ // adaptar parâmetros
+    time_t rawtime;
+    struct tm * date;
+    time(&rawtime);
+    date = localtime(&rawtime); //coleta a data e hora atuais
+
+    if(yy<date->tm_year+1900) return 0;
+    else if(yy>date->tm_year+1900) return 1;
+    else if(mm<date->tm_mon+1) return 0;
+    else if(mm>date->tm_mon+1) return 1;
+    else if(dd<date->tm_mday) return 0;
+    else if(dd>date->tm_mday) return 1;
+
+    return 1;
+}
+
+void return_book_date(Emprestimo * lend){
+    time_t rawtime;
+    struct tm * date;
+    time(&rawtime);
+    date = localtime(&rawtime);
+
+    if(date->tm_mday+7>number_of_days(date->tm_mon+1, date->tm_year+1900)){
+        if(date->tm_mon+1>12){
+            lend->data_devolucao.yy = date->tm_year+1901;
+            lend->data_devolucao.mm = 1;
+        } 
+        else{
+            lend->data_devolucao.yy = date->tm_year+1900;
+            lend->data_devolucao.mm = date->tm_mon+2;
+        }
+        lend->data_devolucao.dd = (date->tm_mday+7)-number_of_days(date->tm_mon+1, date->tm_year+1900);
+    }
+    else{
+        lend->data_devolucao.dd = date->tm_mday+7;
+        lend->data_devolucao.mm = date->tm_mon+1;
+        lend->data_devolucao.yy = date->tm_year+1900;
+    }
+}
+
+int leap_year(int ano){
+    if(ano % 400 == 0 || (ano % 100 != 0 && ano % 4 == 0))
+    return 1; // ano bissexto
+    return 0; // ano não bissexto
+}
+
+int number_of_days(int mes, int ano){
+    switch(mes){
+        case 1: return 31;
+        case 2: if(leap_year(ano)==1) return 29;
+            else return 28;
+        case 3: return 31;
+        case 4: return 30;
+        case 5: return 31;
+        case 6: return 30;
+        case 7: return 31;
+        case 8: return 31;
+        case 9: return 30;
+        case 10: return 31;
+        case 11: return 30;
+        case 12: return 31; //é natal é natal ...
+        default: return -1; //usuário inseriu um mês inválido 
     }
 }
