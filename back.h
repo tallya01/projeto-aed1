@@ -63,21 +63,44 @@ void search_and_print_books(WINDOW * menu, int choice);
 void lend_book(Livro * book, WINDOW * win);
 
 /**
- * @brief Compara se a data e hora inseridas pelo usuário com as atuais
+ * @brief Verifica se a data passada como parâmetro está
+ * no passado ou não
  * 
- * @param dd dia
- * @param mm mês
- * @param yy ano
- * @return int 0 se estiver no passado, 1 se não
+ * @param data 
+ * @return 0 se sim, 1 se não
  */
-int compare_date(int dd, int mm, int yy); //adaptar parâmetros
+int compare_date(Data * data);
 
+/**
+ * @brief Retorna a data de devolução de um livro
+ * (7 dias a partir da data atual)
+ * 
+ * @param lend struct do tipo Emprestimo
+ */
 void return_book_date(Emprestimo * lend);
 
+/**
+ * @brief Verifica se um ano é bissexto
+ * 
+ * @param ano 
+ * @return 1 se sim, 0 se não
+ */
 int leap_year(int ano);
 
+/**
+ * @brief Retona o número de dias de um mês
+ * 
+ * @param mes 
+ * @param ano 
+ * @return int 
+ */
 int number_of_days(int mes, int ano);
 
+/**
+ * @brief Imprime na tela os livros que estão emprestados 
+ * 
+ * @param win 
+ */
 void see_lent_books(WINDOW * win);
 
 #endif
