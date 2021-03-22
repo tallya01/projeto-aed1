@@ -355,17 +355,39 @@ verify_mouse_genre_entry:
 disponíveis depois de emprestar um livro */
 void lend_book(Livro * book, WINDOW * win){
     Emprestimo lending;
+    Livro li;
     FILE * arq = fopen("lent.dat", "ab+");
+    FILE * livro = fopen("books.dat", "rb+");
     time_t rawtime;
     struct tm * date;
+    int i;
     time(&rawtime);
     date = localtime(&rawtime);
-    int i;
 
     wclear(win);
     box(win,0,0);
 
+    if(book->exemplares_disponiveis==0){
+        mvwaddstr(win, 1,1, "Não há exemplares disponíveis desse livro!");
+        fclose(arq);
+        fclose(livro);
+        wrefresh(win);
+        getch();
+        return;
+    }
+
     strcpy(lending.nome_livro, book->nome_livro);
+
+    //atualiza a quantidade de exemplares disponíveis no books.dat
+    while(fread(&li, sizeof(Livro), 1, livro)==1){
+        if(strcmp(li.nome_livro, lending.nome_livro)==0){
+            fseek(livro, (-1)*sizeof(Livro), SEEK_CUR);
+            --li.exemplares_disponiveis;
+            fwrite(&li, sizeof(Livro), 1, livro);
+            fclose(livro);
+            break;
+        }
+    }
     
     mvwaddstr(win, 1,1, "Digite o nome da pessoa que está retirando o livro:");
     curs_set(1);
@@ -398,18 +420,58 @@ void lend_book(Livro * book, WINDOW * win){
 
 void see_lent_books(WINDOW * win){
     FILE * arq = fopen("lent.dat", "rb");
-    int i = 1;
+    int i = 1, k = 0, action = 0;
+    Emprestimo * lent = (Emprestimo *) malloc(sizeof(Emprestimo)), * temp;
 
-    wclear(win);
-    box(win,0,0);
+    while(fread(&emprestimo, sizeof(Emprestimo), 1, arq)){
+       memcpy(lent[i-1].nome_livro, emprestimo.nome_livro, sizeof(emprestimo.nome_livro)+1);
+       memcpy(lent[i-1].nome_pessoa, emprestimo.nome_pessoa, sizeof(emprestimo.nome_pessoa)+1);
+       lent[i-1].hora_retirada.hh = emprestimo.hora_retirada.hh;
+       lent[i-1].hora_retirada.mm = emprestimo.hora_retirada.mm;
+       lent[i-1].data_retirada.dd = emprestimo.data_retirada.dd;
+       lent[i-1].data_retirada.mm = emprestimo.data_retirada.mm;
+       lent[i-1].data_retirada.yy = emprestimo.data_retirada.yy;
+       lent[i-1].data_devolucao.dd = emprestimo.data_devolucao.dd;
+       lent[i-1].data_devolucao.mm = emprestimo.data_devolucao.mm;
+       lent[i-1].data_devolucao.yy = emprestimo.data_devolucao.yy;
 
-    while(fread(&emprestimo, sizeof(Emprestimo), 1, arq)==1){
-        mvwprintw(win, i,1, "Nome do livro: %s", emprestimo.nome_livro);
-        mvwprintw(win, i+1,1, "Nome do retirante: %s", emprestimo.nome_pessoa);
-        mvwprintw(win, i+2,1, "Data e hora de retirada: %d/%d/%d %d:%d", emprestimo.data_retirada.dd, emprestimo.data_retirada.mm, emprestimo.data_retirada.yy, emprestimo.hora_retirada.hh, emprestimo.hora_retirada.mm);
-        mvwprintw(win, i+3,1, "Data de devolução: %d/%d/%d", emprestimo.data_devolucao.dd, emprestimo.data_devolucao.mm, emprestimo.data_devolucao.yy);
-        i += 5;
+       i++;
+       temp = (Emprestimo *) realloc(lent, sizeof(Emprestimo)*i);
+       lent = temp;
+    }
+
+    k=0;
+    while(1){
+        wclear(win);
+        box(win,0,0);
+        curs_set(0);
+        mvwprintw(win, 1,1, "Exibindo resultado %d de %d", k+1, i-1);
+        mvwprintw(win, 3,1, "Nome do livro: %s", lent[k].nome_livro);
+        mvwprintw(win, 4,1, "Nome do retirante: %s", lent[k].nome_pessoa);
+        mvwprintw(win, 5,1, "Data e hora de retirada: %d/%d/%d %d:%d", lent[k].data_retirada.dd, lent[k].data_retirada.mm, lent[k].data_retirada.yy, lent[k].hora_retirada.hh, lent[k].hora_retirada.mm);
+        mvwprintw(win, 6,1, "Prazo para devolução: %d/%d/%d", lent[k].data_devolucao.dd, lent[k].data_devolucao.mm, lent[k].data_devolucao.yy);
+        mvwaddstr(win, 8,1, "Setas esquerda e direita para navegar pelos resultados");
+        mvwaddstr(win, 9,1, "F1 para voltar");
         wrefresh(win);
+        action = getch();
+        switch(action){
+            case KEY_LEFT:
+                if(i==0) break;
+                else{
+                    k--;
+                    break;
+                }
+            case KEY_RIGHT:
+                if(i==k-2) break;
+                else{
+                    k++;
+                    break;
+                }
+            case KEY_F(1):
+                free(lent);
+                fclose(arq);
+                return;
+        }
     }
 
     mvwaddstr(win, i,1, "Pressione qualquer tecla para voltar");
@@ -418,18 +480,18 @@ void see_lent_books(WINDOW * win){
     fclose(arq);
 }
 
-int compare_date(int dd, int mm, int yy){ // adaptar parâmetros
+int compare_date(Data * data){
     time_t rawtime;
     struct tm * date;
     time(&rawtime);
     date = localtime(&rawtime); //coleta a data e hora atuais
 
-    if(yy<date->tm_year+1900) return 0;
-    else if(yy>date->tm_year+1900) return 1;
-    else if(mm<date->tm_mon+1) return 0;
-    else if(mm>date->tm_mon+1) return 1;
-    else if(dd<date->tm_mday) return 0;
-    else if(dd>date->tm_mday) return 1;
+    if(data->yy<date->tm_year+1900) return 0;
+    else if(data->yy>date->tm_year+1900) return 1;
+    else if(data->mm<date->tm_mon+1) return 0;
+    else if(data->mm>date->tm_mon+1) return 1;
+    else if(data->dd<date->tm_mday) return 0;
+    else if(data->dd>date->tm_mday) return 1;
 
     return 1;
 }
