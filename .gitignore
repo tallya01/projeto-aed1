@@ -1,3 +1,5 @@
-.dat
-.exe
-"main"
+*.json
+
+*.dat
+
+main

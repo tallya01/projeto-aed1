@@ -113,4 +113,14 @@ void see_lent_books(WINDOW * win);
 
 void swap_livros(Livro *book, int i, int j);
 
+/**
+ * @brief ordena os livros de acordo com a escolha do user
+ * 
+ * @param book 
+ * @param tamanho 
+ * @param choice 
+ */
+
+void ordena_books(Livro *book, int tamanho, int choice);
+
 #endif
