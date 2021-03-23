@@ -93,6 +93,16 @@ char *get_genre(int genre){
     }
 }
 
+void swap_livros(Livro *book, int i, int j){
+    Livro *temp = (Livro*) malloc(sizeof(Livro));
+    
+    temp[0] = book[i];
+    book[i] = book[j];
+    book[j] = temp[0];
+
+    free(temp);
+}
+
 void search_and_print_books(WINDOW * menu, int choice){
 
     wclear(menu);
@@ -540,7 +550,7 @@ int number_of_days(int mes, int ano){
         case 9: return 30;
         case 10: return 31;
         case 11: return 30;
-        case 12: return 31; //é natal é natal ...
+        case 12: return 31; //é natal é natal ... PEGA NO MEU PÉ
         default: return -1; //usuário inseriu um mês inválido 
     }
 }

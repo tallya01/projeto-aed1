@@ -103,4 +103,14 @@ int number_of_days(int mes, int ano);
  */
 void see_lent_books(WINDOW * win);
 
+/**
+ * @brief inverte os valores de duas estrutras do tipo Livro
+ * 
+ * @param book ponteiro para a estrutura dos livros
+ * @param i posição 1
+ * @param j posição 2
+ */
+
+void swap_livros(Livro *book, int i, int j);
+
 #endif
