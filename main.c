@@ -7,11 +7,9 @@
 //tentar passar isso para a biblioteca
 char * main_menu[SIZE_MAIN_MENU] = {
     "1. Adicionar livro",
-    "2. Buscar livro",
-    "3. Ver livros emprestados",
-    "4. Registrar devolução/renovação",
-    "5. Deletar livro",
-    "6. Sair"
+    "2. Buscar livro (+ emprestar/deletar)",
+    "3. Ver livros emprestados (+ renovar/devolver)",
+    "4. Sair"
 };
 
 char * search_menu[SIZE_SEARCH_MENU] = {
@@ -105,12 +103,6 @@ verify_mouse_search_entry:
                 wclear(menu);
                 goto start_menu;
             case '4':
-                //opção 4
-                break;
-            case '5':
-                //opção 5
-                break;
-            case '6':
                 exit_flag = 1;
                 break;
             case KEY_MOUSE:
