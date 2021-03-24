@@ -77,7 +77,7 @@ int compare_date(Data * data);
  * 
  * @param lend struct do tipo Emprestimo
  */
-void return_book_date(Emprestimo * lend);
+void ret_book_date(Emprestimo * lend);
 
 /**
  * @brief Verifica se um ano é bissexto
@@ -121,6 +121,12 @@ void swap_livros(Livro *book, int i, int j);
  * @param choice 
  */
 
-void ordena_books(Livro *book, int tamanho, int choice);
+void order_books(Livro *book, int tamanho, int choice);
+
+void renew_book(Emprestimo * lending, WINDOW * win);
+
+void ret_book(Emprestimo * lending, WINDOW * win);
+
+void delete_book(Livro * book, WINDOW * win);
 
 #endif
