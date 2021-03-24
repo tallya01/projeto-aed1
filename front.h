@@ -3,7 +3,7 @@
 
 #include <ncurses.h>
 
-#define SIZE_MAIN_MENU 6
+#define SIZE_MAIN_MENU 4
 #define SIZE_SEARCH_MENU 4
 #define SIZE_GENRE_MENU 5
 #define MAIN_MENU_STARTY 4
