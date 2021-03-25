@@ -138,33 +138,20 @@ void order_books(Livro *book, int tamanho, int choice){
         "2. Nome do Autor",
         "3. Ano de Publicação",
     */
-    int x = 0, menor = 0, i, j;
+    int i, j;
 
     switch(choice){
         case 1:
-            for(i=0; i<tamanho-1; i++){
-            x = 0;
-            menor = i;
-            for(j=i+1; j<tamanho-1; j++){
-                if(book[i].nome_livro[0] > book[j].nome_livro[0]) swap_livros(book, i, j);
+            for(i=0; i<tamanho-1; i++){                       
+                for(j=i+1; j<tamanho-1; j++){
+                    if(book[i].nome_livro[0] > book[j].nome_livro[0]) swap_livros(book, i, j);
             }
         }
         break;
         case 2:
             for(i=0; i<tamanho-1; i++){
-            x = 0;
-            menor = i;
-            for(j=i+1; j<tamanho-1; j++){
-                x = 0;
-                while(book[menor].nome_autor[x] == book[j].nome_autor[x]){
-                    x++;
-                }
-                if(book[menor].nome_autor[x] > book[j].nome_autor[x]){
-                    menor  = j;
-                }
-                if(menor != i){
-                    swap_livros(book, menor, i);
-                }
+                for(j=i+1; j<tamanho-1; j++){
+                    if(book[i].nome_autor[0] > book[j].nome_autor[0]) swap_livros(book, i, j);
             }
         }
         break;
