@@ -24,12 +24,22 @@ void add_book(WINDOW * menu){
     box(menu,0,0);
     wrefresh(menu);
     FILE *p;
-    int * genre_select;
+    int * genre_select, var = 0;
 
     mvwaddstr(menu, 1,1, "Digite o nome do Livro: ");
     echo();
     curs_set(1);
     mvwscanw(menu, 2,1, "%[^\n]", livro.nome_livro);
+    var = verify_book(livro.nome_livro);
+    if(var == 1){
+        mvwaddstr(menu, 3,1, "Livro já cadastrado");
+        mvwaddstr(menu, 4,1, "Digite qualquer tecla para sair...");
+        wrefresh(menu);
+        wclear(menu);
+        getch();
+        return;
+    }
+
     mvwaddstr(menu, 3,1, "Digite o nome do Autor: ");
     mvwscanw(menu, 4,1, "%[^\n]", livro.nome_autor);
     mvwaddstr(menu, 5,1, "Selecione o genero do Livro: ");
@@ -70,19 +80,18 @@ verify_mouse_genre_entry:
 
     p = fopen("books.dat", "ab+");
     if(fwrite(&livro, sizeof(livro), 1, p)){
-        mvaddstr(10+SIZE_GENRE_MENU,1, "Livro salvo com sucesso");
+        mvaddstr(11+SIZE_GENRE_MENU,1, "Livro salvo com sucesso");
         fclose(p);
         curs_set(0);
-        wrefresh(menu);
     }else{
-        mvaddstr(10+SIZE_GENRE_MENU,1, "Erro ao salvar o livro");
+        mvaddstr(11+SIZE_GENRE_MENU,1, "Erro ao salvar o livro");
         curs_set(0);
-        wrefresh(menu);
     }
 
     free(genre_select);
-
+    
     mvwprintw(menu, 12+SIZE_GENRE_MENU,1, "Digite qualquer tecla para sair...");
+    wrefresh(menu);
     wclear(menu);
     getch();
 }
@@ -97,6 +106,20 @@ char *get_genre(int genre){
         case 5: return "Computação";
         default: return "error: invalid genre code";
     }
+}
+
+int verify_book(char *nomeLivro){
+    FILE *file = fopen("books.dat", "rb");
+    if(file == NULL) return 0;
+    int count = 0;
+    Livro temp;
+
+    while(fread(&temp, sizeof(Livro), 1, file)==1){
+        if(strcmp(temp.nome_livro, nomeLivro) == 0) count++;
+    }
+    fclose(file);
+    if(count>0) return 1;
+    else return 0;
 }
 
 void swap_livros(Livro *book, int i, int j){
@@ -123,16 +146,7 @@ void order_books(Livro *book, int tamanho, int choice){
             x = 0;
             menor = i;
             for(j=i+1; j<tamanho-1; j++){
-                x = 0;
-                while(book[menor].nome_livro[x] == book[j].nome_livro[x]){
-                    x++;
-                }
-                if(book[menor].nome_livro[x] > book[j].nome_livro[x]){
-                    menor  = j;
-                }
-                if(menor != i){
-                    swap_livros(book, menor, i);
-                }
+                if(book[i].nome_livro[0] > book[j].nome_livro[0]) swap_livros(book, i, j);
             }
         }
         break;
@@ -174,7 +188,7 @@ void search_and_print_books(WINDOW * menu, int choice){
     FILE *file = fopen("books.dat", "rb");
     int achou = 0, k = 1, i, j, n_genre=0, *genre_select, action = 0, x = 0, menor;
     char sub_string[101];
-    int ordenacao_choice = 0;
+    int *ordenacao_choice, ordenacao = 0;
 
     if(file == NULL){
         mvwprintw(menu, 1,1, "Erro ao abrir o arquivo, digite qualquer tecla para retornar ao menu");
@@ -194,9 +208,28 @@ void search_and_print_books(WINDOW * menu, int choice){
             print_menu(ordenacao_menu, 3, menu, 4);
             noecho();
             curs_set(0);
-            ordenacao_choice = getch();
             wrefresh(menu);
-            
+            ordenacao_choice = calloc(1, sizeof(int));
+            *ordenacao_choice = getch();
+verify_mouse_ordenacao_entry1:
+            switch(*ordenacao_choice){
+                case '1': ordenacao = 1;
+                    break;
+                case '2': ordenacao = 2;
+                    break;
+                case '3': ordenacao = 3;
+                    break;
+                case KEY_MOUSE:
+                    if(getmouse(&mouse) == OK){
+                        if(mouse.bstate & BUTTON1_CLICKED){
+                            choice = get_choice(genre_menu, 3, mouse.x, mouse.y, 4);
+                            if(choice != -1){
+                                *ordenacao_choice = choice;
+                                goto verify_mouse_ordenacao_entry1;
+                            } 
+                        }
+                    }
+            }
             noecho();
 
             while(fread(&livro, sizeof(Livro), 1, file)){
@@ -225,7 +258,7 @@ void search_and_print_books(WINDOW * menu, int choice){
                 return;
             }
 
-            order_books(book, k, 3);
+            order_books(book, k, ordenacao);
 
             i=0;
             while(1){
@@ -241,6 +274,7 @@ void search_and_print_books(WINDOW * menu, int choice){
                 mvwaddstr(menu, 9,1, "Setas esquerda e direita para navegar pelos resultados");
                 mvwaddstr(menu, 10,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
                 mvwaddstr(menu, 11,1, "F3 para deletar livro");
+                mvwprintw(menu, 12,1, "ordenacao %d", ordenacao);
                 wrefresh(menu);
                 action = getch();
                 switch(action){
@@ -278,7 +312,28 @@ void search_and_print_books(WINDOW * menu, int choice){
             print_menu(ordenacao_menu, 3, menu, 4);
             noecho();
             curs_set(0);
-            ordenacao_choice = getch();
+            wrefresh(menu);
+            ordenacao_choice = calloc(1, sizeof(int));
+            *ordenacao_choice = getch();
+verify_mouse_ordenacao_entry2:
+            switch(*ordenacao_choice){
+                case '1': ordenacao = 1;
+                    break;
+                case '2': ordenacao = 2;
+                    break;
+                case '3': ordenacao = 3;
+                    break;
+                case KEY_MOUSE:
+                    if(getmouse(&mouse) == OK){
+                        if(mouse.bstate & BUTTON1_CLICKED){
+                            choice = get_choice(genre_menu, 3, mouse.x, mouse.y, 4);
+                            if(choice != -1){
+                                *ordenacao_choice = choice;
+                                goto verify_mouse_ordenacao_entry2;
+                            } 
+                        }
+                    }
+            }
             while(fread(&livro, sizeof(Livro), 1, file) == 1){
                 if(strstr(livro.nome_autor, sub_string) != NULL){
                     memcpy(book[k-1].nome_livro, livro.nome_livro, sizeof(livro.nome_livro)+1);
@@ -305,7 +360,7 @@ void search_and_print_books(WINDOW * menu, int choice){
                 return;
             }
             
-            order_books(book, k, ordenacao_choice);
+            order_books(book, k, ordenacao);
 
             i=0;
             while(1){
@@ -321,6 +376,7 @@ void search_and_print_books(WINDOW * menu, int choice){
                 mvwaddstr(menu, 9,1, "Setas esquerda e direita para navegar pelos resultados");
                 mvwaddstr(menu, 10,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
                 mvwaddstr(menu, 11,1, "F3 para deletar livro");
+                mvwprintw(menu, 12,1, "ordenacao %d", ordenacao);
                 wrefresh(menu);
                 action = getch();
                 switch(action){
@@ -356,7 +412,7 @@ void search_and_print_books(WINDOW * menu, int choice){
             wrefresh(menu);
             genre_select = calloc(1, sizeof(int));
             *genre_select = getch();
-verify_mouse_genre_entry:
+verify_mouse_genre_entry3:
             switch(*genre_select){
                 case '1': n_genre = 1;
                     break;
@@ -374,7 +430,7 @@ verify_mouse_genre_entry:
                             choice = get_choice(genre_menu, SIZE_GENRE_MENU, mouse.x, mouse.y, GENRE_MENU_STARTY-4);
                             if(choice != -1){
                                 *genre_select = choice;
-                                goto verify_mouse_genre_entry;
+                                goto verify_mouse_genre_entry3;
                             } 
                         }
                     }
@@ -382,7 +438,30 @@ verify_mouse_genre_entry:
             noecho();
             mvwprintw(menu, 2+SIZE_GENRE_MENU,1, "Como deseja ordenar os resultados?");
             print_menu(ordenacao_menu, 3, menu, 3+SIZE_GENRE_MENU);
-            ordenacao_choice = getch();
+            noecho();
+            curs_set(0);
+            wrefresh(menu);
+            ordenacao_choice = calloc(1, sizeof(int));
+            *ordenacao_choice = getch();
+verify_mouse_ordenacao_entry:
+            switch(*ordenacao_choice){
+                case '1': ordenacao = 1;
+                    break;
+                case '2': ordenacao = 2;
+                    break;
+                case '3': ordenacao = 3;
+                    break;
+                case KEY_MOUSE:
+                    if(getmouse(&mouse) == OK){
+                        if(mouse.bstate & BUTTON1_CLICKED){
+                            choice = get_choice(genre_menu, 3, mouse.x, mouse.y, 3+SIZE_GENRE_MENU);
+                            if(choice != -1){
+                                *ordenacao_choice = choice;
+                                goto verify_mouse_ordenacao_entry;
+                            } 
+                        }
+                    }
+            }
 
             while(fread(&livro, sizeof(Livro), 1, file) == 1){
                 if(livro.genre == n_genre){
@@ -411,7 +490,7 @@ verify_mouse_genre_entry:
                 return;
             }
 
-            order_books(book, k, 3);
+            order_books(book, k, ordenacao);
 
             i=0;
             while(1){
@@ -427,6 +506,7 @@ verify_mouse_genre_entry:
                 mvwaddstr(menu, 9,1, "Setas esquerda e direita para navegar pelos resultados");
                 mvwaddstr(menu, 10,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
                 mvwaddstr(menu, 11,1, "F3 para deletar livro");
+                mvwprintw(menu, 12,1, "ordenacao %d", ordenacao);
                 wrefresh(menu);
                 action = getch();
                 switch(action){

@@ -129,4 +129,6 @@ void ret_book(Emprestimo * lending, WINDOW * win);
 
 void delete_book(Livro * book, WINDOW * win);
 
+int verify_book(char *nomeLivro);
+
 #endif
