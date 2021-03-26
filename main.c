@@ -1,8 +1,7 @@
 #include <ncurses.h>
 #include <string.h>
 #include <locale.h>
-#include "front.h"
-#include "back.h"
+#include "lib.h"
 
 //tentar passar isso para a biblioteca
 char * main_menu[SIZE_MAIN_MENU] = {
