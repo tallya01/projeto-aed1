@@ -1,8 +1,9 @@
 1. Corrigir bug que deleta o livro do lent.dat ao devolver uma cópia (feito)
-2. Implementar verificação de multa
+2. Implementar verificação de multa (feito)
 3. Verificar funcionamento do algoritmo de ordenação (feito)
 4. Implementar função de deletar livro (feito)
 5. Polir o front (fazer por último)
 6. Implementar função de confirmar ação e chamar em ações importantes (emprestar, adicionar, deletar, devolver...)
 7. Verificar se um livro já está cadastrado no banco de dados antes de adicionar (feito)
-8. Verificar se há livros emprestados na see_lent_books
+8. Verificar se há livros emprestados na see_lent_books (feito)
+9. Fazer verificação de maiúsculas e minúsculas
