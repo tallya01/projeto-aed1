@@ -290,14 +290,14 @@ void order_books(Livro *book, int tamanho, int choice){
         case 1:
             for(i=0; i<tamanho-1; i++){                       
                 for(j=i+1; j<tamanho-1; j++){
-                    if(book[i].nome_livro[0] > book[j].nome_livro[0]) swap_livros(book, i, j);
+                    if(book[i].nome_livro[0] > book[j].nome_livro[0]) swap_books(book, i, j);
             }
         }
         break;
         case 2:
             for(i=0; i<tamanho-1; i++){
                 for(j=i+1; j<tamanho-1; j++){
-                    if(book[i].nome_autor[0] > book[j].nome_autor[0]) swap_livros(book, i, j);
+                    if(book[i].nome_autor[0] > book[j].nome_autor[0]) swap_books(book, i, j);
             }
         }
         break;
@@ -305,7 +305,7 @@ void order_books(Livro *book, int tamanho, int choice){
             for(i=0; i<tamanho-1; i++){
                 for(j = i+1; j<tamanho-1; j++){
                     if(book[i].ano_publicacao > book[j].ano_publicacao){
-                        swap_livros(book, i, j);
+                        swap_books(book, i, j);
                     }
                 }
             }
@@ -847,7 +847,7 @@ void see_lent_books(WINDOW * win){
     fclose(arq);
 }
 
-void swap_livros(Livro *book, int i, int j){
+void swap_books(Livro *book, int i, int j){
     Livro *temp = (Livro*) malloc(sizeof(Livro));
     
     temp[0] = book[i];

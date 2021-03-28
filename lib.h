@@ -197,7 +197,7 @@ void see_lent_books(WINDOW * win);
  * @param i posição 1
  * @param j posição 2
  */
-void swap_livros(Livro *book, int i, int j);
+void swap_books(Livro *book, int i, int j);
 
 /**
  * @brief Verifica se um livro já está cadastrado no sistema
