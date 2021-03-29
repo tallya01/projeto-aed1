@@ -3,6 +3,7 @@
 #include <stdlib.h>
 #include <string.h>
 #include <ncurses.h>
+#include <ctype.h>
 
 char * genre_menu[SIZE_GENRE_MENU] = {
     "1. Romance",
@@ -285,19 +286,24 @@ void order_books(Livro *book, int tamanho, int choice){
         "3. Ano de Publicação",
     */
     int i, j;
+    char a, b;
 
     switch(choice){
         case 1:
             for(i=0; i<tamanho-1; i++){                       
                 for(j=i+1; j<tamanho-1; j++){
-                    if(book[i].nome_livro[0] > book[j].nome_livro[0]) swap_books(book, i, j);
+                    a = tolower(book[i].nome_livro[0]);
+                    b = tolower(book[j].nome_livro[0]);
+                    if(a > b) swap_books(book, i, j);
             }
         }
         break;
         case 2:
             for(i=0; i<tamanho-1; i++){
                 for(j=i+1; j<tamanho-1; j++){
-                    if(book[i].nome_autor[0] > book[j].nome_autor[0]) swap_books(book, i, j);
+                    a = tolower(book[i].nome_autor[0]);
+                    b = tolower(book[j].nome_autor[0]);
+                    if(a > b) swap_books(book, i, j);
             }
         }
         break;
