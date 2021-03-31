@@ -37,12 +37,17 @@ int main(){
     refresh();
     menu = newwin(LINES, COLS, 0, 0);
     keypad(menu, TRUE);
+    init_color(COLOR_MAGENTA, 988,59,753);
+    init_pair(1,COLOR_MAGENTA, COLOR_BLACK);
+    init_pair(2, COLOR_BLACK, COLOR_MAGENTA);
 
 start_menu:
-    box(menu, 0, 0);
+    border_win(menu, 1);
     curs_set(0);
     mvwaddstr(menu, 1, (COLS-26)/2, "Gerenciador de Biblioteca");
+    wattron(menu, COLOR_PAIR(2));
     mvwaddstr(menu, 2, 1, "Clique na opção desejada ou digite o número correspondente:");
+    wattroff(menu, COLOR_PAIR(2));
     print_menu(main_menu, SIZE_MAIN_MENU, menu, MAIN_MENU_STARTY);
     wrefresh(menu);
 
@@ -54,11 +59,12 @@ verify_mouse_main_entry:
         switch(main_entry){
             case '1':
                 add_book(menu);
+                wclear(menu);
                 goto start_menu;
                 break;
             case '2':
                 wclear(menu);
-                box(menu, 0, 0);
+                border_win(menu, 1);
                 mvwaddstr(menu, 1, (COLS-13)/2, "Buscar livro");
                 print_menu(search_menu, SIZE_SEARCH_MENU, menu, SEARCH_MENU_STARTY);
 

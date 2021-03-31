@@ -60,6 +60,22 @@ Emprestimo emprestimo;
 void add_book(WINDOW * menu);
 
 /**
+ * @brief coloca uma linha horizontal da largura da tela em y
+ * 
+ * @param win 
+ * @param x
+ */
+void add_hline(WINDOW * win, int x);
+
+/**
+ * @brief Coloca borda em uma janela seguindo um par de cores
+ * 
+ * @param win 
+ * @param pair 
+ */
+void border_win(WINDOW * win, int pair);
+
+/**
  * @brief Verifica se a data passada como parâmetro está
  * no passado ou não
  * 
@@ -67,6 +83,15 @@ void add_book(WINDOW * menu);
  * @return 0 se sim, 1 se não
  */
 int compare_date(Data * data);
+
+/**
+ * @brief Solicita confirmação de uma ação ao usuário
+ * 
+ * @param win 
+ * @param mode 
+ * @return int 1 para confirmar, 0 para voltar
+ */
+int confirm_action(WINDOW * win, int mode);
 
 /**
  * @brief Calcula a quantidade de dias passados

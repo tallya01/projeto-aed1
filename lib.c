@@ -21,7 +21,7 @@ char * ordenacao_menu[3] = {
 
 void add_book(WINDOW * menu){
     wclear(menu);
-    box(menu,0,0);
+    border_win(menu, 1);
     wrefresh(menu);
     FILE *p;
     int * genre_select, var = 0;
@@ -30,6 +30,7 @@ void add_book(WINDOW * menu){
     echo();
     curs_set(1);
     mvwscanw(menu, 2,1, "%[^\n]", livro.nome_livro);
+    noecho();
     var = verify_book(livro.nome_livro);
     if(var == 1){
         curs_set(0);
@@ -42,7 +43,9 @@ void add_book(WINDOW * menu){
     }
 
     mvwaddstr(menu, 3,1, "Digite o nome do Autor: ");
+    echo();
     mvwscanw(menu, 4,1, "%[^\n]", livro.nome_autor);
+    noecho();
     mvwaddstr(menu, 5,1, "Selecione o genero do Livro: ");
     print_menu(genre_menu, SIZE_GENRE_MENU, menu, GENRE_MENU_STARTY);
     curs_set(0);
@@ -74,27 +77,53 @@ verify_mouse_genre_entry:
     }
     curs_set(1);
     mvwaddstr(menu, 6+SIZE_GENRE_MENU,1, "Digite o ano de publicacao: ");
+    echo();
     mvwscanw(menu, 7+SIZE_GENRE_MENU,1, "%d", &livro.ano_publicacao);
     mvwaddstr(menu, 8+SIZE_GENRE_MENU,1, "Digite a quantidade de exemplares: ");
     mvwscanw(menu, 9+SIZE_GENRE_MENU,1, "%d", &livro.quantidade_exemplares);
+    noecho();
     livro.exemplares_disponiveis = livro.quantidade_exemplares;
 
-    p = fopen("books.dat", "ab+");
-    if(fwrite(&livro, sizeof(livro), 1, p)){
-        mvaddstr(11+SIZE_GENRE_MENU,1, "Livro salvo com sucesso");
-        fclose(p);
-        curs_set(0);
-    }else{
-        mvaddstr(11+SIZE_GENRE_MENU,1, "Erro ao salvar o livro");
-        curs_set(0);
-    }
+    if(confirm_action(menu, 1)==1){
+        p = fopen("books.dat", "ab+");
+        if(fwrite(&livro, sizeof(livro), 1, p)){
+            mvaddstr(5,1, "Livro salvo com sucesso");
+            fclose(p);
+            curs_set(0);
+        }else{
+            mvaddstr(5,1, "Erro ao salvar o livro");
+            curs_set(0);
+        }
 
-    free(genre_select);
-    
-    mvwprintw(menu, 12+SIZE_GENRE_MENU,1, "Digite qualquer tecla para sair...");
-    wrefresh(menu);
-    wclear(menu);
-    getch();
+        free(genre_select);
+
+        mvwprintw(menu, 6,1, "Digite qualquer tecla para sair...");
+        wrefresh(menu);
+        wclear(menu);
+        getch();
+    }
+    else{
+        free(genre_select);
+        return;
+    }
+}
+
+void add_hline(WINDOW * win, int x){
+    int i;
+
+    wattron(win, COLOR_PAIR(1));
+    wattron(win, A_BOLD);
+    for(i=1;i<COLS-1;i++){
+        mvwaddch(win, x, i, '_');
+    }
+    wattroff(win, COLOR_PAIR(1));
+    wattroff(win, A_BOLD);
+}
+
+void border_win(WINDOW * win, int pair){
+    wattron(win, COLOR_PAIR(pair));
+    box(win,0,0);
+    wattroff(win, COLOR_PAIR(pair));
 }
 
 int compare_date(Data * data){
@@ -111,6 +140,44 @@ int compare_date(Data * data){
     else if(data->dd>date->tm_mday) return 1;
 
     return 1;
+}
+
+int confirm_action(WINDOW * win, int mode){
+    int action;
+    char str[20];
+
+    wclear(win);
+    border_win(win,1);
+
+    switch(mode){
+        case 1: strcpy(str, "adicionar");
+                break;
+        case 2: strcpy(str, "deletar");
+                break;
+        case 3: strcpy(str, "emprestar");
+                break;
+        case 4: strcpy(str, "renovar");
+                break;
+        case 5: strcpy(str, "devolver");
+                break;
+    }
+
+    mvwprintw(win,1,1, "Tem certeza de que deseja %s este livro?", str);
+    mvwaddstr(win,3,1, "Pressione 'S' para confirmar ou 'N' para cancelar");
+    curs_set(0);
+    noecho();
+    wrefresh(win);
+
+    while(1){
+        action = getch();
+        switch(action){
+            case 's':
+            case 'S': return 1;
+            case 'n':
+            case 'N': return 0;
+        }
+    }
+
 }
 
 int days_late(Data * data){
@@ -148,24 +215,31 @@ void delete_book(Livro * book, WINDOW * win){
     FILE * arq = fopen("books.dat", "rb"), * temp = fopen("temp.dat", "ab");
     Livro bk;
 
-    wclear(win);
-    box(win,0,0);
+    if(confirm_action(win, 2)==1){
+        wclear(win);
+        border_win(win,1);
 
-    while(fread(&bk, sizeof(Livro), 1, arq)){
-        if(strcmp(bk.nome_livro, book->nome_livro)==0){
-            mvwaddstr(win,1,1,"Livro deletado com sucesso!");
-            mvwaddstr(win,3,1,"Pressione qualquer tecla para voltar");
+        while(fread(&bk, sizeof(Livro), 1, arq)){
+            if(strcmp(bk.nome_livro, book->nome_livro)==0){
+                mvwaddstr(win,1,1,"Livro deletado com sucesso!");
+                mvwaddstr(win,3,1,"Pressione qualquer tecla para voltar");
+            }
+            else fwrite(&bk, sizeof(Livro), 1, temp);
         }
-        else fwrite(&bk, sizeof(Livro), 1, temp);
-    }
 
-    fclose(arq);
-    fclose(temp);
-    remove("books.dat");
-    rename("temp.dat", "books.dat");
-    wrefresh(win);
-    getch();
-    return;
+        fclose(arq);
+        fclose(temp);
+        remove("books.dat");
+        rename("temp.dat", "books.dat");
+        wrefresh(win);
+        getch();
+        return;
+    }
+    else{
+        fclose(arq);
+        fclose(temp);
+        return;
+    }
 }
 
 int get_choice(char ** menu, int menuSize, int mouseX, int mouseY, int startY){
@@ -199,7 +273,7 @@ int leap_year(int ano){
 void lend_book(Livro * book, WINDOW * win){
     Emprestimo lending;
     Livro li;
-    FILE * arq = fopen("lent.dat", "ab+");
+    FILE * arq;
     FILE * livro = fopen("books.dat", "rb+");
     time_t rawtime;
     struct tm * date;
@@ -208,30 +282,16 @@ void lend_book(Livro * book, WINDOW * win){
     date = localtime(&rawtime);
 
     wclear(win);
-    box(win,0,0);
+    border_win(win,1);
 
     if(book->exemplares_disponiveis==0){
         mvwaddstr(win, 1,1, "Não há exemplares disponíveis desse livro!");
-        fclose(arq);
         fclose(livro);
         wrefresh(win);
         getch();
         return;
     }
 
-    strcpy(lending.nome_livro, book->nome_livro);
-
-    //atualiza a quantidade de exemplares disponíveis no books.dat
-    while(fread(&li, sizeof(Livro), 1, livro)==1){
-        if(strcmp(li.nome_livro, lending.nome_livro)==0){
-            fseek(livro, (-1)*sizeof(Livro), SEEK_CUR);
-            --li.exemplares_disponiveis;
-            fwrite(&li, sizeof(Livro), 1, livro);
-            fclose(livro);
-            break;
-        }
-    }
-    
     mvwaddstr(win, 1,1, "Digite o nome da pessoa que está retirando o livro:");
     curs_set(1);
     echo();
@@ -239,25 +299,46 @@ void lend_book(Livro * book, WINDOW * win){
     mvwscanw(win, 2,1, "%[^\n]", &lending.nome_pessoa);
     curs_set(0);
     noecho();
-    lending.data_retirada.dd = date->tm_mday;
-    lending.data_retirada.mm = date->tm_mon+1;
-    lending.data_retirada.yy = date->tm_year+1900;
-    lending.hora_retirada.hh = date->tm_hour;
-    lending.hora_retirada.mm = date->tm_min;
-    ret_book_date(&lending);
 
-    if(fwrite(&lending, sizeof(Emprestimo), 1, arq)){
-        mvwprintw(win, 4,1, "Empréstimo registrado com sucesso, data de devolução %d/%d/%d", lending.data_devolucao.dd, lending.data_devolucao.mm, lending.data_devolucao.yy);
-        wrefresh(win);
-        fclose(arq);
-        getch();
+    if(confirm_action(win, 3)==1){
+        arq = fopen("lent.dat", "ab+");
+        strcpy(lending.nome_livro, book->nome_livro);
+
+        //atualiza a quantidade de exemplares disponíveis no books.dat
+        while(fread(&li, sizeof(Livro), 1, livro)==1){
+            if(strcmp(li.nome_livro, lending.nome_livro)==0){
+                fseek(livro, (-1)*sizeof(Livro), SEEK_CUR);
+                --li.exemplares_disponiveis;
+                fwrite(&li, sizeof(Livro), 1, livro);
+                fclose(livro);
+                break;
+            }
+        }
+
+        lending.data_retirada.dd = date->tm_mday;
+        lending.data_retirada.mm = date->tm_mon+1;
+        lending.data_retirada.yy = date->tm_year+1900;
+        lending.hora_retirada.hh = date->tm_hour;
+        lending.hora_retirada.mm = date->tm_min;
+        ret_book_date(&lending);
+
+        if(fwrite(&lending, sizeof(Emprestimo), 1, arq)){
+            mvwprintw(win, 5,1, "Empréstimo registrado com sucesso, data de devolução %d/%d/%d", lending.data_devolucao.dd, lending.data_devolucao.mm, lending.data_devolucao.yy);
+            wrefresh(win);
+            fclose(arq);
+            getch();
+        }
+        else{
+            mvwaddstr(win, 5,1, "Empréstimo mal sucedido, tente novamente");
+            wrefresh(win);
+            fclose(arq);
+            getch();
+        }
     }
     else{
-        mvwaddstr(win, 4,1, "Empréstimo mal sucedido, tente novamente");
-        wrefresh(win);
-        fclose(arq);
-        getch();
+        fclose(livro);
     }
+    
 }
 
 int number_of_days(int mes, int ano){
@@ -333,29 +414,35 @@ void renew_book(Emprestimo * lending, WINDOW * win){
     FILE * arq = fopen("lent.dat", "rb+");
     int i = 5;
 
-    wclear(win);
-    box(win,0,0);
+    if(confirm_action(win, 4)==1){
+        wclear(win);
+        border_win(win,1);
 
-    while(fread(&emprestimo, sizeof(Emprestimo), 1, arq)){
-        if(strcmp(emprestimo.nome_livro,lending->nome_livro)==0 && strcmp(emprestimo.nome_pessoa,lending->nome_pessoa)==0){
-            ret_book_date(&emprestimo);
-            fseek(arq, (-1)*sizeof(Emprestimo), SEEK_CUR);
-            fwrite(&emprestimo, sizeof(Emprestimo), 1, arq);
-            fclose(arq);
-            mvwprintw(win, 1,1,"Renovação registrada! Nova data de devolução: %d/%d/%d", emprestimo.data_devolucao.dd, emprestimo.data_devolucao.mm, emprestimo.data_devolucao.yy);
-            mvwaddstr(win, 3,1, "Pressione qualquer tecla para voltar.");
-            wrefresh(win);
-            getch();
-            return;
+        while(fread(&emprestimo, sizeof(Emprestimo), 1, arq)){
+            if(strcmp(emprestimo.nome_livro,lending->nome_livro)==0 && strcmp(emprestimo.nome_pessoa,lending->nome_pessoa)==0){
+                ret_book_date(&emprestimo);
+                fseek(arq, (-1)*sizeof(Emprestimo), SEEK_CUR);
+                fwrite(&emprestimo, sizeof(Emprestimo), 1, arq);
+                fclose(arq);
+                mvwprintw(win, 1,1,"Renovação registrada! Nova data de devolução: %d/%d/%d", emprestimo.data_devolucao.dd, emprestimo.data_devolucao.mm, emprestimo.data_devolucao.yy);
+                mvwaddstr(win, 3,1, "Pressione qualquer tecla para voltar.");
+                wrefresh(win);
+                getch();
+                return;
+            }
         }
-    }
 
-    fclose(arq);
-    mvwaddstr(win, 1,1,"Não foi possível registrar a devolução! Tente novamente.");
-    mvwaddstr(win, 3,1, "Pressione qualquer tecla para voltar.");
-    wrefresh(win);
-    getch();
-    return;
+        fclose(arq);
+        mvwaddstr(win, 1,1,"Não foi possível registrar a devolução! Tente novamente.");
+        mvwaddstr(win, 3,1, "Pressione qualquer tecla para voltar.");
+        wrefresh(win);
+        getch();
+        return;
+    }
+    else{
+        fclose(arq);
+        return;
+    }  
 }
 
 void ret_book(Emprestimo * lending, WINDOW * win){
@@ -363,39 +450,45 @@ void ret_book(Emprestimo * lending, WINDOW * win){
     Livro bk;
     int i=0;
 
-    wclear(win);
-    box(win,0,0);
+    if(confirm_action(win, 5)==1){
+        wclear(win);
+        border_win(win,1);
 
-    //atualiza a quantidade de exemplares disponíveis
-    while(fread(&bk, sizeof(Livro), 1, li)){
-        if(strcmp(bk.nome_livro, lending->nome_livro)==0){
-            ++bk.exemplares_disponiveis;
-            fseek(li, (-1)*sizeof(Livro), SEEK_CUR);
-            fwrite(&bk, sizeof(Livro), 1, li);
-            fclose(li);
-            break;
+        //atualiza a quantidade de exemplares disponíveis
+        while(fread(&bk, sizeof(Livro), 1, li)){
+            if(strcmp(bk.nome_livro, lending->nome_livro)==0){
+                ++bk.exemplares_disponiveis;
+                fseek(li, (-1)*sizeof(Livro), SEEK_CUR);
+                fwrite(&bk, sizeof(Livro), 1, li);
+                fclose(li);
+                break;
+            }
         }
+
+        //deleta o livro devolvido do lent.dat
+        while(fread(&emprestimo, sizeof(Emprestimo), 1, lend)){
+            if(strcmp(emprestimo.nome_pessoa, lending->nome_pessoa)==0 && strcmp(emprestimo.nome_livro, lending->nome_livro)==0){
+                mvwaddstr(win, 1,1, "Devolução registrada!");
+                mvwaddstr(win, 3,1, "Pressione qualquer tecla para voltar");
+                wrefresh(win);
+            }
+            else{
+                fwrite(&emprestimo, sizeof(Emprestimo), 1, temp);
+            }
+        }
+
+        fclose(temp);
+        fclose(lend);
+        remove("lent.dat");
+        rename("temp.dat", "lent.dat");
+
+        getch();
+        return;
     }
-
-    //deleta o livro devolvido do lent.dat
-    while(fread(&emprestimo, sizeof(Emprestimo), 1, lend)){
-        if(strcmp(emprestimo.nome_pessoa, lending->nome_pessoa)==0 && strcmp(emprestimo.nome_livro, lending->nome_livro)==0){
-            mvwaddstr(win, 1,1, "Devolução registrada!");
-            mvwaddstr(win, 3,1, "Pressione qualquer tecla para voltar");
-            wrefresh(win);
-        }
-        else{
-            fwrite(&emprestimo, sizeof(Emprestimo), 1, temp);
-        }
-    }
-
-    fclose(temp);
-    fclose(lend);
-    remove("lent.dat");
-    rename("temp.dat", "lent.dat");
-
-    getch();
-    return;
+    else{
+        fclose(temp);
+        fclose(lend);
+    } 
 }
 
 void ret_book_date(Emprestimo * lend){
@@ -425,7 +518,7 @@ void ret_book_date(Emprestimo * lend){
 void search_and_print_books(WINDOW * menu, int choice){
 
     wclear(menu);
-    box(menu, 0,0);
+    border_win(menu,1);
     Livro *book = (Livro*) malloc(sizeof(Livro)), *n_genre_book;
     FILE *file = fopen("books.dat", "rb");
     int achou = 0, k = 1, i, j, n_genre=0, *genre_select, action = 0, x = 0, menor;
@@ -505,7 +598,7 @@ verify_mouse_ordenacao_entry1:
             i=0;
             while(1){
                 wclear(menu);
-                box(menu,0,0);
+                border_win(menu,1);
                 curs_set(0);
                 mvwprintw(menu,1,1, "Exibindo resultado %d de %d:", i+1, k-1);
                 mvwprintw(menu, 3,1, "Livro: %s", book[i].nome_livro);
@@ -513,9 +606,10 @@ verify_mouse_ordenacao_entry1:
                 mvwprintw(menu, 5,1, "Gênero: %s", get_genre(book[i].genre));
                 mvwprintw(menu, 6,1, "Ano de publicação: %d", book[i].ano_publicacao);
                 mvwprintw(menu, 7,1, "Total de exemplares: %d (%d disponíveis)", book[i].quantidade_exemplares, book[i].exemplares_disponiveis);
-                mvwaddstr(menu, 9,1, "Setas esquerda e direita para navegar pelos resultados");
-                mvwaddstr(menu, 10,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
-                mvwaddstr(menu, 11,1, "F3 para deletar livro");
+                add_hline(menu, 8);
+                mvwaddstr(menu, 10,1, "Setas esquerda e direita para navegar pelos resultados");
+                mvwaddstr(menu, 11,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
+                mvwaddstr(menu, 12,1, "F3 para deletar livro");
                 wrefresh(menu);
                 action = getch();
                 switch(action){
@@ -606,7 +700,7 @@ verify_mouse_ordenacao_entry2:
             i=0;
             while(1){
                 wclear(menu);
-                box(menu,0,0);
+                border_win(menu,1);
                 curs_set(0);
                 mvwprintw(menu,1,1, "Exibindo resultado %d de %d:", i+1, k-1);
                 mvwprintw(menu, 3,1, "Livro: %s", book[i].nome_livro);
@@ -614,9 +708,10 @@ verify_mouse_ordenacao_entry2:
                 mvwprintw(menu, 5,1, "Gênero: %s", get_genre(book[i].genre));
                 mvwprintw(menu, 6,1, "Ano de publicação: %d", book[i].ano_publicacao);
                 mvwprintw(menu, 7,1, "Total de exemplares: %d (%d disponíveis)", book[i].quantidade_exemplares, book[i].exemplares_disponiveis);
-                mvwaddstr(menu, 9,1, "Setas esquerda e direita para navegar pelos resultados");
-                mvwaddstr(menu, 10,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
-                mvwaddstr(menu, 11,1, "F3 para deletar livro");
+                add_hline(menu, 8);
+                mvwaddstr(menu, 10,1, "Setas esquerda e direita para navegar pelos resultados");
+                mvwaddstr(menu, 11,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
+                mvwaddstr(menu, 12,1, "F3 para deletar livro");
                 wrefresh(menu);
                 action = getch();
                 switch(action){
@@ -735,7 +830,7 @@ verify_mouse_ordenacao_entry:
             i=0;
             while(1){
                 wclear(menu);
-                box(menu,0,0);
+                border_win(menu,1);
                 curs_set(0);
                 mvwprintw(menu,1,1, "Exibindo resultado %d de %d:", i+1, k-1);
                 mvwprintw(menu, 3,1, "Livro: %s", book[i].nome_livro);
@@ -743,9 +838,10 @@ verify_mouse_ordenacao_entry:
                 mvwprintw(menu, 5,1, "Gênero: %s", get_genre(book[i].genre));
                 mvwprintw(menu, 6,1, "Ano de publicação: %d", book[i].ano_publicacao);
                 mvwprintw(menu, 7,1, "Total de exemplares: %d (%d disponíveis)", book[i].quantidade_exemplares, book[i].exemplares_disponiveis);
-                mvwaddstr(menu, 9,1, "Setas esquerda e direita para navegar pelos resultados");
-                mvwaddstr(menu, 10,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
-                mvwaddstr(menu, 11,1, "F3 para deletar livro");
+                add_hline(menu, 8);
+                mvwaddstr(menu, 10,1, "Setas esquerda e direita para navegar pelos resultados");
+                mvwaddstr(menu, 11,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
+                mvwaddstr(menu, 12,1, "F3 para deletar livro");
                 wrefresh(menu);
                 action = getch();
                 switch(action){
@@ -783,14 +879,14 @@ void see_lent_books(WINDOW * win){
     Emprestimo * lent = (Emprestimo *) malloc(sizeof(Emprestimo)), * temp;
 
     wclear(win);
-    box(win,0,0);
+    border_win(win,1);
     curs_set(0);
 
     if(arq == NULL){
         mvwaddstr(win, 1,1, "Não há livros emprestados!");
         mvwaddstr(win, 3,1, "Pressione qualquer tecla para voltar");
         wrefresh(win);
-        getch;
+        getch();
         free(lent);
         return;
     }
@@ -809,16 +905,23 @@ void see_lent_books(WINDOW * win){
 
     k=0;
     while(1){
+        wclear(win);
+        border_win(win,1);
         mvwprintw(win, 1,1, "Exibindo resultado %d de %d", k+1, i-1);
         mvwprintw(win, 3,1, "Nome do livro: %s", lent[k].nome_livro);
         mvwprintw(win, 4,1, "Nome do retirante: %s", lent[k].nome_pessoa);
         mvwprintw(win, 5,1, "Data e hora de retirada: %d/%d/%d %d:%d", lent[k].data_retirada.dd, lent[k].data_retirada.mm, lent[k].data_retirada.yy, lent[k].hora_retirada.hh, lent[k].hora_retirada.mm);
         mvwprintw(win, 6,1, "Prazo para devolução: %d/%d/%d", lent[k].data_devolucao.dd, lent[k].data_devolucao.mm, lent[k].data_devolucao.yy);
         if(compare_date(&lent[k].data_devolucao)==0){
+            wattron(win, COLOR_PAIR(1));
+            //wattron(win, A_BOLD);
             mvwprintw(win, 7,1, "Devolução atrasada! Multa: R$ %d,00", days_late(&lent[k].data_devolucao));
+            wattroff(win, COLOR_PAIR(1));
+            //wattroff(win, A_BOLD);
         }
-        mvwaddstr(win, 9,1, "Setas esquerda e direita para navegar pelos resultados");
-        mvwaddstr(win, 10,1, "F1 para voltar | F2 para renovar livro | F3 devolver livro");
+        add_hline(win,8);
+        mvwaddstr(win, 10,1, "Setas esquerda e direita para navegar pelos resultados");
+        mvwaddstr(win, 11,1, "F1 para voltar | F2 para renovar livro | F3 devolver livro");
         wrefresh(win);
         action = getch();
         switch(action){
