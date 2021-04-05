@@ -6,4 +6,4 @@
 6. Implementar função de confirmar ação e chamar em ações importantes (emprestar, adicionar, deletar, devolver...) (feito)
 7. Verificar se um livro já está cadastrado no banco de dados antes de adicionar (feito)
 8. Verificar se há livros emprestados na see_lent_books (feito)
-9. Fazer verificação de maiúsculas e minúsculas
+9. Fazer verificação de maiúsculas e minúsculas (feito)

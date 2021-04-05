@@ -366,7 +366,7 @@ void order_books(Livro *book, int tamanho, int choice){
         "2. Nome do Autor",
         "3. Ano de Publicação",
     */
-    int i, j;
+    int i = 0, j = 0, k = 0;
     char a, b;
 
     switch(choice){
@@ -376,15 +376,33 @@ void order_books(Livro *book, int tamanho, int choice){
                     a = tolower(book[i].nome_livro[0]);
                     b = tolower(book[j].nome_livro[0]);
                     if(a > b) swap_books(book, i, j);
+                    else if(a == b){
+                        k = 1;
+                        while(a == b){
+                            a = tolower(book[i].nome_livro[k]);
+                            b = tolower(book[j].nome_livro[k]);
+                            k++; 
+                        }
+                        if(a > b) swap_books(book, i, j);
+                    }
             }
         }
         break;
         case 2:
-            for(i=0; i<tamanho-1; i++){
+            for(i=0; i<tamanho-1; i++){                       
                 for(j=i+1; j<tamanho-1; j++){
                     a = tolower(book[i].nome_autor[0]);
                     b = tolower(book[j].nome_autor[0]);
                     if(a > b) swap_books(book, i, j);
+                    else if(a == b){
+                        k = 1;
+                        while(a == b){
+                            a = tolower(book[i].nome_autor[k]);
+                            b = tolower(book[j].nome_autor[k]);
+                            k++; 
+                        }
+                        if(a > b) swap_books(book, i, j);
+                    }
             }
         }
         break;
@@ -608,7 +626,7 @@ verify_mouse_ordenacao_entry1:
                 mvwprintw(menu, 7,1, "Total de exemplares: %d (%d disponíveis)", book[i].quantidade_exemplares, book[i].exemplares_disponiveis);
                 add_hline(menu, 8);
                 mvwaddstr(menu, 10,1, "Setas esquerda e direita para navegar pelos resultados");
-                mvwaddstr(menu, 11,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
+                mvwaddstr(menu, 11,1, "F1 para voltar ao menu principal | F2 para emprestar livro");
                 mvwaddstr(menu, 12,1, "F3 para deletar livro");
                 wrefresh(menu);
                 action = getch();
@@ -625,10 +643,10 @@ verify_mouse_ordenacao_entry1:
                             i++;
                             break;
                         }
-                    case KEY_F(1):
+                    case KEY_F(2):
                         lend_book(&book[i], menu);
                         return;
-                    case KEY_F(2):
+                    case KEY_F(1):
                         fclose(file);
                         free(book);
                         return;
@@ -710,7 +728,7 @@ verify_mouse_ordenacao_entry2:
                 mvwprintw(menu, 7,1, "Total de exemplares: %d (%d disponíveis)", book[i].quantidade_exemplares, book[i].exemplares_disponiveis);
                 add_hline(menu, 8);
                 mvwaddstr(menu, 10,1, "Setas esquerda e direita para navegar pelos resultados");
-                mvwaddstr(menu, 11,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
+                mvwaddstr(menu, 11,1, "F1 para voltar ao menu principal | F2 para emprestar livro");
                 mvwaddstr(menu, 12,1, "F3 para deletar livro");
                 wrefresh(menu);
                 action = getch();
@@ -727,10 +745,10 @@ verify_mouse_ordenacao_entry2:
                             i++;
                             break;
                         }
-                    case KEY_F(1):
+                    case KEY_F(2):
                         lend_book(&book[i], menu);
                         return;
-                    case KEY_F(2):
+                    case KEY_F(1):
                         fclose(file);
                         free(book);
                         return;
@@ -840,7 +858,7 @@ verify_mouse_ordenacao_entry:
                 mvwprintw(menu, 7,1, "Total de exemplares: %d (%d disponíveis)", book[i].quantidade_exemplares, book[i].exemplares_disponiveis);
                 add_hline(menu, 8);
                 mvwaddstr(menu, 10,1, "Setas esquerda e direita para navegar pelos resultados");
-                mvwaddstr(menu, 11,1, "F1 para emprestar livro | F2 para voltar ao menu principal");
+                mvwaddstr(menu, 11,1, "F1 para voltar ao menu principal | F2 para emprestar livro");
                 mvwaddstr(menu, 12,1, "F3 para deletar livro");
                 wrefresh(menu);
                 action = getch();
@@ -857,10 +875,10 @@ verify_mouse_ordenacao_entry:
                             i++;
                             break;
                         }
-                    case KEY_F(1):
+                    case KEY_F(2):
                         lend_book(&book[i], menu);
                         return;
-                    case KEY_F(2):
+                    case KEY_F(1):
                         fclose(file);
                         free(book);
                         free(genre_select);
@@ -891,7 +909,7 @@ void see_lent_books(WINDOW * win){
         return;
     }
 
-    while(fread(&emprestimo, sizeof(Emprestimo), 1, arq)){
+    while(fread(&emprestimo, sizeof(Emprestimo), 1, arq)==1){
        memcpy(lent[i-1].nome_livro, emprestimo.nome_livro, sizeof(emprestimo.nome_livro)+1);
        memcpy(lent[i-1].nome_pessoa, emprestimo.nome_pessoa, sizeof(emprestimo.nome_pessoa)+1);
        lent[i-1].hora_retirada = emprestimo.hora_retirada;
@@ -901,6 +919,15 @@ void see_lent_books(WINDOW * win){
        i++;
        temp = (Emprestimo *) realloc(lent, sizeof(Emprestimo)*i);
        lent = temp;
+    }
+
+    if(i==1){
+        mvwaddstr(win, 1,1, "Não há livros emprestados!");
+        mvwaddstr(win, 3,1, "Pressione qualquer tecla para voltar");
+        wrefresh(win);
+        getch();
+        free(lent);
+        return;
     }
 
     k=0;
