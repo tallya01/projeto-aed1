@@ -242,6 +242,7 @@ void delete_book(Livro * book, WINDOW * win){
     }
 }
 
+
 int get_choice(char ** menu, int menuSize, int mouseX, int mouseY, int startY){
     int i;
 
@@ -537,7 +538,7 @@ void search_and_print_books(WINDOW * menu, int choice){
 
     wclear(menu);
     border_win(menu,1);
-    Livro *book = (Livro*) malloc(sizeof(Livro)), *n_genre_book;
+    Livro *book = (Livro*) malloc(sizeof(Livro));
     FILE *file = fopen("books.dat", "rb");
     int achou = 0, k = 1, i, j, n_genre=0, *genre_select, action = 0, x = 0, menor;
     char sub_string[101];
@@ -595,8 +596,7 @@ verify_mouse_ordenacao_entry1:
                     book[k-1].exemplares_disponiveis = livro.exemplares_disponiveis;
 
                     k++;
-                    n_genre_book = (Livro*) realloc(book, sizeof(Livro)*k);
-                    book = n_genre_book;
+                    book = (Livro*) realloc(book, sizeof(Livro)*k);
                     achou = 1;
                 }
             }
@@ -697,8 +697,7 @@ verify_mouse_ordenacao_entry2:
                     book[k-1].exemplares_disponiveis = livro.exemplares_disponiveis;
 
                     k++;
-                    n_genre_book = (Livro*) realloc(book, sizeof(Livro)*k);
-                    book = n_genre_book;
+                    book = (Livro*) realloc(book, sizeof(Livro)*k);
                     achou = 1;
                 }
             }
@@ -826,8 +825,7 @@ verify_mouse_ordenacao_entry:
                     book[k-1].exemplares_disponiveis = livro.exemplares_disponiveis;
 
                     k++;
-                    n_genre_book = (Livro*) realloc(book, sizeof(Livro)*k);
-                    book = n_genre_book;
+                    book = (Livro*) realloc(book, sizeof(Livro)*k);
                     achou = 1;
                 }
             }
